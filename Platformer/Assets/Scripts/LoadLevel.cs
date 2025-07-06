@@ -7,28 +7,44 @@ using UnityEngine.UI;
 public class LoadLevel : MonoBehaviour
 {
     public static event Action OnHoldComplete;
-    public float holdDuration = 1f; // How long to hold to load level
+    public float holdDuration = 1f;
     public Image fillCircle;
 
     float holdTimer = 0;
     bool m_isHolding = false;
-    public Exit exitTile;
+    Exit m_exitTile;
+
+    void Start()
+    {
+        m_exitTile = FindAnyObjectByType<Exit>();
+        GameManager.OnReset += HandleGameReset;
+    }
+
+    void OnDestroy()
+    {
+        GameManager.OnReset -= HandleGameReset;
+    }
 
     void Update()
     {
-        if (m_isHolding && Exit.CanExit)
+        if (!m_isHolding || m_exitTile == null) return;
+
+        if (Exit.CanExit)
         {
             holdTimer += Time.deltaTime;
             fillCircle.fillAmount = holdTimer / holdDuration;
+            
             if (holdTimer >= holdDuration)
             {
-                exitTile.ExitAnimation();
-
-                StartCoroutine(WaitForAnimation());
+                if (m_exitTile != null)
+                {
+                    m_exitTile.ExitAnimation();
+                    StartCoroutine(WaitForAnimation());
+                }
                 ResetHold();
             }
         }
-        else if (!Exit.CanExit && m_isHolding)
+        else if (m_isHolding)
         {
             ResetHold();
         }
@@ -36,6 +52,8 @@ public class LoadLevel : MonoBehaviour
 
     public void OnHold(InputAction.CallbackContext context)
     {
+        if (m_exitTile == null) return;
+
         if (context.started && Exit.CanExit)
         {
             m_isHolding = true;
@@ -56,6 +74,12 @@ public class LoadLevel : MonoBehaviour
     IEnumerator WaitForAnimation()
     {
         yield return new WaitForSeconds(1f);
-        OnHoldComplete.Invoke();
+        OnHoldComplete?.Invoke();
+    }
+
+    void HandleGameReset()
+    {
+        m_exitTile = FindAnyObjectByType<Exit>();
+        ResetHold();
     }
 }
