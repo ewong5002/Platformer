@@ -6,18 +6,22 @@ using UnityEngine.Tilemaps;
 
 public class ObjectSpawner : MonoBehaviour
 {
-    public enum ObjectType { Exit, Gem, Enemy }
+    public enum ObjectType { Exit, Gem, Enemy, HealthItem }
 
     [Header("References")]
     public Tilemap tilemap;
     public GameObject[] objectPrefabs; // [0] Exit, [1] Gem, [2] Enemy
 
-    [Header("Enemy Settings")]
-    public int maxEnemies = 3;
+    [Header("Settings")]
+    public int maxObjects = 5;
     public float spawnInterval = 3f;
+    public float enemyLifetime = 20f;
+    public float healthLifetime = 10f;
+    public float healthProbability = 0.4f;
 
     List<Vector3> m_validSpawnPositions = new List<Vector3>();
     List<GameObject> m_spawnedObjects = new List<GameObject>();
+    bool m_isSpawning;
     const int MAX_GEMS = 3;
     const float EXIT_HEIGHT = 0.4f;
 
@@ -30,6 +34,11 @@ public class ObjectSpawner : MonoBehaviour
 
     void Update()
     {
+        if (!m_isSpawning && ActiveObjectCount() < maxObjects)
+        {
+            StartCoroutine(SpawnObjects());
+        }
+
         if (!tilemap.gameObject.activeInHierarchy)
         {
             LevelChange();
@@ -42,11 +51,11 @@ public class ObjectSpawner : MonoBehaviour
         GatherValidPositions();
         DestroySpawnedObjects();
         SpawnIntialObjects();
-        StartCoroutine(SpawnEnemies());
+        StartCoroutine(SpawnObjects());
     }
 
-    int ActiveEnemyCount() =>
-        m_spawnedObjects.Count(obj => obj != null && obj.CompareTag("Enemy"));
+    int ActiveObjectCount() =>
+        m_spawnedObjects.Count(obj => obj != null && (obj.CompareTag("Enemy") || obj.CompareTag("Health")));
 
     void SpawnIntialObjects()
     {
@@ -58,13 +67,27 @@ public class ObjectSpawner : MonoBehaviour
         }
     }
 
-    IEnumerator SpawnEnemies()
+    ObjectType RandomObjectType()
     {
-        while (ActiveEnemyCount() < maxEnemies)
+        float randomChoice = Random.value;
+
+        if (randomChoice <= healthProbability)
+        {
+            return ObjectType.HealthItem;
+        }
+
+        return ObjectType.Enemy;
+    }
+
+    IEnumerator SpawnObjects()
+    {
+        m_isSpawning = true;
+        while (ActiveObjectCount() < maxObjects)
         {
             yield return new WaitForSeconds(spawnInterval);
-            SpawnObject(ObjectType.Enemy);
+            SpawnObject(RandomObjectType());
         }
+        m_isSpawning = false;
     }
 
     void SpawnObject(ObjectType type)
@@ -78,6 +101,15 @@ public class ObjectSpawner : MonoBehaviour
         GameObject newObject = Instantiate(objectPrefabs[(int)type],
             (type == ObjectType.Exit) ? GetPlatformPosition(spawnPosition) : spawnPosition, Quaternion.identity);
         m_spawnedObjects.Add(newObject);
+
+        if (type == ObjectType.HealthItem)
+        {
+            StartCoroutine(DestroyObjectsAfterTime(newObject, healthLifetime));
+        }
+        else if (type == ObjectType.Enemy)
+        {
+            StartCoroutine(DestroyObjectsAfterTime(newObject, enemyLifetime));
+        }
     }
 
     Vector3 FindValidSpawnPosition(ObjectType type)
@@ -111,6 +143,18 @@ public class ObjectSpawner : MonoBehaviour
         }
 
         return Vector3.zero;
+    }
+
+    IEnumerator DestroyObjectsAfterTime(GameObject gameObject, float time)
+    {
+        yield return new WaitForSeconds(time);
+
+        if (gameObject)
+        {
+            m_spawnedObjects.Remove(gameObject);
+            m_validSpawnPositions.Add(gameObject.transform.position);
+            Destroy(gameObject);
+        }
     }
 
     void DestroySpawnedObjects()

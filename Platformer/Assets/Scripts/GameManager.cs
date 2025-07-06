@@ -53,13 +53,6 @@ public class GameManager : MonoBehaviour
     public void ResetGame()
     {
         m_survivedLevelsCount = 0;
-
-        var currentExits = Levels[m_currentLevelIndex].GetComponentsInChildren<Exit>();
-        foreach (var exit in currentExits)
-        {
-            exit.ResetExit();
-        }
-
         LoadNewLevel(0, false);
         OnReset.Invoke();
         Time.timeScale = 1;
@@ -72,12 +65,23 @@ public class GameManager : MonoBehaviour
         Player.transform.position = new Vector3(0, 0, 0);
         m_currentLevelIndex = level;
 
+        var loadLevel = FindAnyObjectByType<LoadLevel>();
+        if (loadLevel != null)
+        {
+            loadLevel.UpdateExitReference();
+        }
+
         if (wantSurvivedIncreased) m_survivedLevelsCount++;
 
         ResetLevel();
     }
 
-    void LoadNextLevel()
+	private object FindObjectByType<T>()
+	{
+		throw new NotImplementedException();
+	}
+
+	void LoadNextLevel()
     {
         int nextLevelIndex = (m_currentLevelIndex == Levels.Count - 1) ? 0 : m_currentLevelIndex + 1;
 

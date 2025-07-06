@@ -27,9 +27,4 @@ public class Exit : MonoBehaviour
 	{
 		exitAnimator.SetTrigger("exit");
 	}
-
-	public void ResetExit()
-	{
-		CanExit = false;
-	}
 }

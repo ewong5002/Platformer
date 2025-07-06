@@ -19,6 +19,7 @@ public class PlayerHealth : MonoBehaviour
 
         m_spriteRenderer = GetComponent<SpriteRenderer>();
         GameManager.OnReset += ResetHealth;
+        HealthItem.OnHealthCollect += Heal;
     }
 
     void ResetHealth()
@@ -34,6 +35,17 @@ public class PlayerHealth : MonoBehaviour
         {
             TakeDamage(enemy.damage);
         }
+    }
+
+    void Heal(int amount)
+    {
+        m_currentHealth += amount;
+        if (m_currentHealth > maxHealth)
+        {
+            m_currentHealth = maxHealth;
+        }
+
+        healthUI.UpdateHearts(m_currentHealth);
     }
 
     void TakeDamage(int damage)

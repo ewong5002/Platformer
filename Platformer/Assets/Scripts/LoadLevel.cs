@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
 public class LoadLevel : MonoBehaviour
@@ -16,7 +17,7 @@ public class LoadLevel : MonoBehaviour
 
     void Start()
     {
-        m_exitTile = FindAnyObjectByType<Exit>();
+        UpdateExitReference();
         GameManager.OnReset += HandleGameReset;
     }
 
@@ -27,13 +28,19 @@ public class LoadLevel : MonoBehaviour
 
     void Update()
     {
-        if (!m_isHolding || m_exitTile == null) return;
+        if (m_exitTile == null)
+        {
+            UpdateExitReference();
+            if (m_exitTile == null) return;
+        }
 
+        if (!m_isHolding) return;
+        
         if (Exit.CanExit)
         {
             holdTimer += Time.deltaTime;
             fillCircle.fillAmount = holdTimer / holdDuration;
-            
+
             if (holdTimer >= holdDuration)
             {
                 if (m_exitTile != null)
@@ -48,6 +55,12 @@ public class LoadLevel : MonoBehaviour
         {
             ResetHold();
         }
+    }
+
+    public void UpdateExitReference()
+    {
+        m_exitTile = FindAnyObjectByType<Exit>();
+        ResetHold();
     }
 
     public void OnHold(InputAction.CallbackContext context)

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,10 +8,19 @@ public class PlayerManager : MonoBehaviour
     public Animator animator;
     public ParticleSystem smokeFX;
     bool m_isFacingRight = true;
+    BoxCollider2D m_playerCollider;
 
     [Header("Movement")]
     public float moveSpeed = 5f;
     float m_horizontalMovement;
+
+    [Header("Dashing")]
+    public float dashSpeed = 20f;
+    public float dashDuration = 0.25f;
+    public float dashCooldown = 0.1f;
+    bool m_isDashing;
+    bool m_canDash = true;
+    TrailRenderer tr;
 
     [Header("Jumping")]
     public float jumpPower = 10f;
@@ -22,6 +32,7 @@ public class PlayerManager : MonoBehaviour
     public Vector2 groundCheckSize = new Vector2(0.5f, 0.5f);
     public LayerMask groundLayer;
     bool m_isGrounded = true;
+    bool m_isOnPlatform;
 
     [Header("Gravity")]
     public float baseGravity = 2f;
@@ -42,9 +53,24 @@ public class PlayerManager : MonoBehaviour
     float m_wallJumpTimer;
     public Vector2 wallJumpPower = new Vector2(5f, 10f);
 
+    void Start()
+    {
+        tr = GetComponent<TrailRenderer>();
+        m_playerCollider = GetComponent<BoxCollider2D>();
+    }
+
     // Update is called once per frame
     void Update()
     {
+        animator.SetFloat("yVelocity", rb.linearVelocityY);
+        animator.SetFloat("magnitude", rb.linearVelocity.magnitude);
+        animator.SetBool("isWallSliding", m_isWallSliding);
+
+        if (m_isDashing)
+        {
+            return;
+        }
+
         GroundCheck();
         Gravity();
         WallSlide();
@@ -55,15 +81,73 @@ public class PlayerManager : MonoBehaviour
             rb.linearVelocity = new Vector2(m_horizontalMovement * moveSpeed, rb.linearVelocityY);
             Flip();
         }
-
-        animator.SetFloat("yVelocity", rb.linearVelocityY);
-        animator.SetFloat("magnitude", rb.linearVelocity.magnitude);
-        animator.SetBool("isWallSliding", m_isWallSliding);
     }
 
     public void Move(InputAction.CallbackContext context)
     {
         m_horizontalMovement = context.ReadValue<Vector2>().x;
+    }
+
+    public void Dash(InputAction.CallbackContext context)
+    {
+        if (context.performed && m_canDash)
+        {
+            StartCoroutine(DashCoroutine());
+        }
+    }
+
+    IEnumerator DashCoroutine()
+    {
+        Physics2D.IgnoreLayerCollision(7, 8, true);
+        m_canDash = false;
+        m_isDashing = true;
+        tr.emitting = true;
+
+        float dashDirection = m_isFacingRight ? 1f : -1f;
+
+        rb.linearVelocity = new Vector2(dashDirection * dashSpeed, rb.linearVelocityY);
+
+        yield return new WaitForSeconds(dashDuration);
+
+        rb.linearVelocity = new Vector2(0f, rb.linearVelocityY);
+
+        m_isDashing = false;
+        tr.emitting = false;
+
+        Physics2D.IgnoreLayerCollision(7, 8, false);
+        yield return new WaitForSeconds(dashCooldown);
+        m_canDash = true;
+    }
+
+    public void Drop(InputAction.CallbackContext context)
+    {
+        if (context.performed && m_isGrounded && m_isOnPlatform && m_playerCollider.enabled)
+        {
+            StartCoroutine(DisablePlayerCollider(0.4f));
+        }
+    }
+
+    IEnumerator DisablePlayerCollider(float disableTime)
+    {
+        m_playerCollider.enabled = false;
+        yield return new WaitForSeconds(disableTime);
+        m_playerCollider.enabled = true;
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Platform"))
+        {
+            m_isOnPlatform = true;
+        }
+    }
+
+    void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Platform"))
+        {
+            m_isOnPlatform = false;
+        }
     }
 
     public void Jump(InputAction.CallbackContext context)
