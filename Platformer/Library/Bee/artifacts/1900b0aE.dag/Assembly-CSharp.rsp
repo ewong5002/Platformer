@@ -446,6 +446,7 @@
 "Assets/Scripts/Collector.cs"
 "Assets/Scripts/Enemy.cs"
 "Assets/Scripts/Exit.cs"
+"Assets/Scripts/FallingPlatform.cs"
 "Assets/Scripts/GameManager.cs"
 "Assets/Scripts/Gem.cs"
 "Assets/Scripts/GemUI.cs"
@@ -454,9 +455,16 @@
 "Assets/Scripts/IItem.cs"
 "Assets/Scripts/LoadLevel.cs"
 "Assets/Scripts/MovingPlatform.cs"
+"Assets/Scripts/MusicManager.cs"
 "Assets/Scripts/ObjectSpawner.cs"
+"Assets/Scripts/PauseMenuManager.cs"
 "Assets/Scripts/PlayerHealth.cs"
 "Assets/Scripts/PlayerManager.cs"
+"Assets/Scripts/SoundEffectLibrary.cs"
+"Assets/Scripts/SoundEffectManager.cs"
+"Assets/Scripts/SpeedItem.cs"
+"Assets/Scripts/StartMenuManager.cs"
+"Assets/Scripts/Trap.cs"
 -langversion:9.0
 /deterministic
 /optimize+

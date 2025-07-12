@@ -7,12 +7,14 @@ public class PlayerManager : MonoBehaviour
     public Rigidbody2D rb;
     public Animator animator;
     public ParticleSystem smokeFX;
+    public ParticleSystem speedFX;
     bool m_isFacingRight = true;
     BoxCollider2D m_playerCollider;
 
     [Header("Movement")]
     public float moveSpeed = 5f;
     float m_horizontalMovement;
+    float speedMultiplier = 1f;
 
     [Header("Dashing")]
     public float dashSpeed = 20f;
@@ -57,6 +59,7 @@ public class PlayerManager : MonoBehaviour
     {
         tr = GetComponent<TrailRenderer>();
         m_playerCollider = GetComponent<BoxCollider2D>();
+        SpeedItem.OnSpeedCollected += StartSpeedBoost;
     }
 
     // Update is called once per frame
@@ -78,8 +81,16 @@ public class PlayerManager : MonoBehaviour
 
         if (!m_isWallJumping)
         {
-            rb.linearVelocity = new Vector2(m_horizontalMovement * moveSpeed, rb.linearVelocityY);
+            rb.linearVelocity = new Vector2(m_horizontalMovement * moveSpeed * speedMultiplier, rb.linearVelocityY);
             Flip();
+        }
+    }
+
+    public void Pause(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            PauseMenuManager.PauseMenu();
         }
     }
 
@@ -102,6 +113,7 @@ public class PlayerManager : MonoBehaviour
         m_canDash = false;
         m_isDashing = true;
         tr.emitting = true;
+        SoundEffectManager.Play("Dash");
 
         float dashDirection = m_isFacingRight ? 1f : -1f;
 
@@ -117,6 +129,20 @@ public class PlayerManager : MonoBehaviour
         Physics2D.IgnoreLayerCollision(7, 8, false);
         yield return new WaitForSeconds(dashCooldown);
         m_canDash = true;
+    }
+
+    void StartSpeedBoost(float multiplier)
+    {
+        StartCoroutine(SpeedBoost(multiplier));
+    }
+
+    IEnumerator SpeedBoost(float multiplier)
+    {
+        speedMultiplier = multiplier;
+        speedFX.Play();
+        yield return new WaitForSeconds(2f);
+        speedMultiplier = 1f;
+        speedFX.Stop();
     }
 
     public void Drop(InputAction.CallbackContext context)
@@ -270,6 +296,7 @@ public class PlayerManager : MonoBehaviour
             Vector3 ls = transform.localScale;
             ls.x *= -1f;
             transform.localScale = ls;
+            speedFX.transform.localScale = ls;
 
             if (m_isGrounded)
             {

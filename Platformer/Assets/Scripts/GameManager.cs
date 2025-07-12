@@ -52,6 +52,8 @@ public class GameManager : MonoBehaviour
 
     public void ResetGame()
     {
+        gameOverScreen.SetActive(false);
+        MusicManager.PlayBGM(true);
         m_survivedLevelsCount = 0;
         LoadNewLevel(0, false);
         OnReset.Invoke();
@@ -100,6 +102,7 @@ public class GameManager : MonoBehaviour
     void GameOverScreen()
     {
         gameOverScreen.SetActive(true);
+        MusicManager.PauseBGM();
         survivedText.text = $"YOU SURVIVED {m_survivedLevelsCount} LEVEL";
         if (m_survivedLevelsCount != 1) survivedText.text += "S";
         Time.timeScale = 0;

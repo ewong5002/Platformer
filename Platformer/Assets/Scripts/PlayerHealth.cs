@@ -35,6 +35,12 @@ public class PlayerHealth : MonoBehaviour
         {
             TakeDamage(enemy.damage);
         }
+
+        Trap trap = collision.GetComponent<Trap>();
+        if (trap && trap.damage > 0)
+        {
+            TakeDamage(trap.damage);
+        }
     }
 
     void Heal(int amount)
@@ -46,6 +52,7 @@ public class PlayerHealth : MonoBehaviour
         }
 
         healthUI.UpdateHearts(m_currentHealth);
+        SoundEffectManager.Play("Heal");
     }
 
     void TakeDamage(int damage)
@@ -58,6 +65,8 @@ public class PlayerHealth : MonoBehaviour
         {
             OnPlayerDied.Invoke();
         }
+
+        SoundEffectManager.Play("PlayerHit");
     }
 
     IEnumerator FlashRed()
