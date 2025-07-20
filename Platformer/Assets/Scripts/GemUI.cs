@@ -32,24 +32,12 @@ public class GemUI : MonoBehaviour
 
 	public void UpdateGems(int currentGems)
 	{
-		for (int i = 0; i < m_gems.Count; i++)
+		for (int i = 0; i < currentGems; i++)
 		{
-			if (i < currentGems)
+			if (i == currentGems - 1)
 			{
-				if (i == currentGems - 1)
-				{
-					StartCoroutine(AnimateGemFill(m_gems[i]));
-				}
-				else
-				{
-					m_gems[i].sprite = collectedGemSprite;
-				}
+				StartCoroutine(AnimateGemFill(m_gems[i]));
 				m_gems[i].color = Color.yellow;
-			}
-			else
-			{
-				m_gems[i].sprite = emptyGemSprite;
-				m_gems[i].color = Color.white;
 			}
 		}
 	}

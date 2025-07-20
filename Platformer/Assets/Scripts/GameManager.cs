@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviour
     {
         Levels[m_currentLevelIndex].gameObject.SetActive(false);
         Levels[level].gameObject.SetActive(true);
-        Player.transform.position = new Vector3(0, 0, 0);
+        Player.transform.position = new Vector3(0, 3, 0);
         m_currentLevelIndex = level;
 
         var loadLevel = FindAnyObjectByType<LoadLevel>();
